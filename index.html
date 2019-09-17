@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title>Mathematical Visualization</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Custom styles for this template -->
+  <link href="css/simple-sidebar.css" rel="stylesheet">
+
+  <script type="text/javascript" src="slope.js"></script>
+  <script type="text/javascript" src="coordinate.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.js"></script>
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    canvas {
+      background-color: black;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <div class="d-flex" id="wrapper">
+
+    <!-- Sidebar -->
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">Learn Math Properly</div>
+      <div class="list-group list-group-flush">
+        <a href="#" class="list-group-item list-group-item-action bg-light">Polynomials</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Taylor Series</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Euler Method</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Fourier Series</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Complex Roots</a>
+        <a href="#" class="list-group-item list-group-item-action bg-light">Exponentials</a>
+      </div>
+    </div>
+    <!-- /#sidebar-wrapper -->
+
+    <!-- Page Content -->
+    <div id="page-content-wrapper">
+
+      <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <button class="btn btn-primary" id="menu-toggle">Toggle Menu</button>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav ml-auto mt-2 mt-lg-0">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#">Link</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Dropdown
+              </a>
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                <a class="dropdown-item" href="#">Action</a>
+                <a class="dropdown-item" href="#">Another action</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#">Something else here</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <h1 class="mt-4">First Order Differential Equations</h1>
+        <p>Differential equations are the most important part in modeling physical systems. And they are very abstracted, and really difficult to think about how they really works. Even though we might be able to solve them without knowing what they really are, or how they are describing the world. So I made this app to help you imagine what the first order linear differential equations are by plotting their slope fields (isoclines). The solution to the slope field is the one that follow the slope line. And I will add the solutions after I finish my exam. I will explain more on that on my blog <a href="https://foundationalunderstanding.blogspot.com/">Foundational Understanding</a></p>
+        <p>I will add more visualizations later on this page</p>
+  
+        <div class="row">
+          <div class="col-sm">
+            <canvas id='canvas' width="500" height="400"></canvas>
+          </div>
+          <div class="col-sm">
+             <div id='parameters'></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /#page-content-wrapper -->
+
+  </div>
+  <!-- /#wrapper -->
+
+  <!-- Bootstrap core JavaScript -->
+  <script src="vendor/jquery/jquery.min.js"></script>
+  <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Menu Toggle Script -->
+  <script>
+    $("#menu-toggle").click(function(e) {
+      e.preventDefault();
+      $("#wrapper").toggleClass("toggled");
+    });
+  </script>
+
+  <script>
+  window.onload = function (){
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+
+    var plane = new XYPlane(canvas);
+    plane.grid = false;
+    plane.centerX = canvas.width / 2;
+    plane.centerY = canvas.height / 2;
+    plane.draw(ctx);
+
+    var parameters = new function(){
+      this.a = -10;
+      this.equations = 0 ;
+    };
+
+    var gui = new dat.GUI({autoPlace: false});
+    gui.add(parameters, 'equations',{
+        "y' = y(a - y)": 0,
+        "y' = x - ay" : 1,
+        "y' = ax / y": 2, 
+        "y' = y^2 - ax^2": 3,
+        "y' = ay / x": 4,
+        "y' = y^3 - ay - x": 5,
+        "y' = (x+2y)(x-y)": 6
+      } );
+    gui.add(parameters, 'a', -10, 10);
+    gui.domElement.id = 'gui_control';
+    document.getElementById('parameters').appendChild(gui.domElement);
+
+
+    var slope_line = new SlopeLine(100, 100);
+    slope_line.pivot = false;
+    slope_line.length = 20;
+    slope_line.draw(ctx, 0);
+
+
+    var diff_equations = [diff_equ0, diff_equ1, diff_equ2, diff_equ3, diff_equ4, diff_equ5, diff_equ6];
+  
+    function diff_equ0(x, y){
+      return y*(parameters.a-y);
+    }
+
+    function diff_equ1(x, y){
+      return x - (parameters.a*y);
+    }
+
+    function diff_equ2(x,y){
+      return (parameters.a*x)/y;
+    }
+
+    function diff_equ3(x,y){
+      return y**2 - parameters.a*x**2;
+    }
+
+    function diff_equ4(x,y){
+      return (parameters.a*y) / x;
+    }
+
+    function diff_equ5(x,y){
+      return y**3 - parameters.a*y - x;
+    }
+
+    function diff_equ6(x,y){
+      return (x+2*y)*(x-y);
+    }
+
+
+    function drawFrame(){
+      window.requestAnimationFrame(drawFrame);
+      ctx.clearRect(0,0, canvas.width, canvas.height);
+      plane.draw(ctx);
+      for (let x=-10; x< 10; x+=0.6){
+        for(let y=-10; y<10; y+=0.6){
+          var slope = diff_equations[parameters.equations](x,y)
+          slope_line.y = plane.centerY - y*plane.ppi;
+          slope_line.x = plane.centerX + x*plane.ppi;
+          slope_line.draw(ctx, slope);
+        }
+      }
+    }
+
+    drawFrame();
+    
+    
+
+  };
+</script>
+
+</body>
+
+</html>
