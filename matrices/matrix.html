@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Matrices</title>
+	<style>
+		body{
+			background-color: '#bbb';
+		}
+		canvas{
+			background-color: black;
+		}
+		#c1{
+			position: relative;
+			width: 600px;
+			height: 500px;
+
+		}
+		#gui_control{
+			position: absolute;
+			bottom: 20px;
+			right: 0px;
+
+		}
+		#c2{
+			position: relative;
+			width: 600px;
+			height: 500px;
+		}
+	
+		#poly_gui{
+			position: absolute;
+			right: 0px;
+			bottom: 20px;
+	
+			
+		}
+		
+	</style>
+	<script type="text/javascript" src="vector.js"></script>
+	<script type="text/javascript" src="coordinate.js"></script>
+	<script type="text/javascript" src="transform_plane.js"></script>
+	<script type="text/javascript" src="plot.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+</head>
+<body>
+<h3>Sinusoidal wave</h3>
+<div id='c1'>
+	<canvas id='canvas' width="600" height="500"></canvas>
+	<div id='control'></div>
+</div>
+<h3>Polynomial</h3>
+<div id='c2'>
+	<canvas id='canvas2' width="600" height="500"></canvas>
+	<div id='control2'></div>
+</div>
+
+
+<script>
+	window.onload = function(){
+		var canvas = document.getElementById('canvas');
+		var context = canvas.getContext('2d');
+
+		var gui_control = document.getElementById('control');
+
+		var controls = new function (){
+			this.amplitude = 2;
+			this.frequency = 0.5;
+		};
+
+		var plot_control = new dat.GUI({autoPlace: false});
+		plot_control.add(controls, 'amplitude', 1,5);
+		plot_control.add(controls, 'frequency', 0.1,3);
+		gui_control.appendChild(plot_control.domElement);
+		plot_control.domElement.id = 'gui_control';
+
+		var xyplane = new XYPlane(canvas);
+		
+
+		xyplane.centerX = 100;
+		xyplane.centerY = 200;
+		xyplane.draw(context);
+
+		var plot = new Plot();
+		plot.offset = 150;
+		for (let i=0; i<10; i+=0.1){
+			plot.x.push(i);
+		}
+		
+		// v1.draw(context, xyplane);
+		// tv.draw(context, xyplane);
+		function rotate(v1, angle){
+			var v2 = new Vector(0,0);
+			v2.x = v1.x*Math.cos(angle) -v1.y*Math.sin(angle);
+			v2.y = v1.x*Math.sin(angle) +v1.y*Math.cos(angle);
+			return v2;
+		}
+		var angle = 0;
+
+		function oscillate(){
+			f = (controls.frequency*2*Math.PI) / 60;
+			window.requestAnimationFrame(oscillate);
+			context.clearRect(0,0, canvas.width, canvas.height);
+			xyplane.draw(context);
+
+			for (let j=0; j<10; j+=0.1){
+				plot.y.push(controls.amplitude*Math.cos(controls.frequency*j-angle));
+			}
+			v1 = new Vector(0,controls.amplitude);
+			v1.x0 = 100;
+			v1.y0 = 200;
+			var v = rotate(v1, angle);
+			v.x0 = 100;
+			v.y0 = 200;
+			plot.draw(context, xyplane);
+			v.draw(context, xyplane);
+			context.beginPath();
+			context.strokeStyle = '#ffff00';
+			context.moveTo(v.xp, v.yp);
+			context.lineTo(xyplane.centerX+150, xyplane.centerY-(plot.y[0]*xyplane.ppi));
+			context.stroke();
+			plot.y = [];
+			angle += f;
+		}
+		oscillate();
+
+		var canvas2 = document.getElementById('canvas2');
+		var context2 = canvas2.getContext('2d');
+
+		var powers = new function(){
+			this.power = 1;
+			this.x_offset = 0;
+			this.y_offset = 0;
+		};
+
+		var gui = new dat.GUI({autoPlace: false})
+		gui.add(powers, 'power', 1, 5).step(1);
+		gui.add(powers, 'x_offset',-5, 5);
+		gui.add(powers, 'y_offset',-5, 5);
+		gui.domElement.id = 'poly_gui';
+		document.getElementById('control2').appendChild(gui.domElement);
+
+
+
+		var plane = new XYPlane(canvas2);
+		plane.centerX = canvas2.width / 2;
+		plane.centerY = canvas2.height / 2;
+		plane.draw(context);
+		
+		var plot2 = new Plot();
+		console.log(plot2.offset);
+		console.log(plot.offset);
+
+		for (let i =-10; i < 10; i+=0.1){
+			plot2.x.push(i);
+			plot2.y.push((i-powers.x_offset)**powers.power+powers.y_offset);
+		}
+
+		plot2.draw(context2, plane);
+
+		function status(context){
+			context2.save();
+			context2.beginPath();
+			context2.font = '20px Arial';
+			context2.fillStyle = '#ffffff';
+			var label = 'y = (x-'+powers.x_offset.toFixed(2) + ')^' + powers.power + '+' + powers.y_offset.toFixed(2);
+			context2.fillText(label, 10,25 ); 
+			context2.fill();
+			context2.restore();
+		}
+
+		function drawframe(){
+			window.requestAnimationFrame(drawframe);
+
+			context2.clearRect(0, 0, canvas2.width, canvas2.height);
+			plane.draw(context2);
+			status(context2);
+			for (let i =-10; i < 10; i+=0.1){
+				plot2.y.push((i-powers.x_offset)**powers.power+ powers.y_offset);
+
+			}
+
+			plot2.draw(context2, plane);
+			plot2.y = [];
+		}
+
+		 drawframe();
+	};
+
+</script>
+</body>
+</html>
