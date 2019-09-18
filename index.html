@@ -129,9 +129,14 @@
     var parameters = new function(){
       this.a = -10;
       this.equations = 0 ;
+      this.x = 1;
+      this.y = 0;
+      this.plot = find_solution;
     };
 
-    var gui = new dat.GUI({autoPlace: false});
+    
+
+    var gui = new dat.GUI({autoPlace:false});
     gui.add(parameters, 'equations',{
         "y' = y(a - y)": 0,
         "y' = x - ay" : 1,
@@ -140,8 +145,11 @@
         "y' = ay / x": 4,
         "y' = y^3 - ay - x": 5,
         "y' = (x+2y)(x-y)": 6
-      } );
-    gui.add(parameters, 'a', -10, 10);
+      } ).onChange(update_slope);
+    gui.add(parameters, 'a', -10, 10).onChange(update_slope);
+    gui.add(parameters, 'x', -10, 10).onChange(update_slope);
+    gui.add(parameters, 'y', -10, 10).onChange(update_slope);
+    gui.add(parameters, 'plot');
     gui.domElement.id = 'gui_control';
     document.getElementById('parameters').appendChild(gui.domElement);
 
@@ -182,6 +190,26 @@
       return (x+2*y)*(x-y);
     }
 
+    function find_solution(){
+      var step = 0.01;
+      var x0 = parameters.x;
+      var y0 = parameters.y;
+      for (let x=0; x<20; x+=step){
+        var slope = diff_equations[parameters.equations](x0, y0); 
+        var x1 = x0 + step;
+        var y1 = y0 + slope*step;
+        ctx.beginPath();
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 2;
+        ctx.moveTo(plane.centerX+x0*plane.ppi, plane.centerY-y0*plane.ppi);
+        ctx.lineTo(plane.centerX+x1*plane.ppi, plane.centerY-y1*plane.ppi);
+        ctx.stroke();
+        x0 = x1;
+        y0 = y1;
+      }
+
+    }
+
 
     function drawFrame(){
       window.requestAnimationFrame(drawFrame);
@@ -197,8 +225,22 @@
       }
     }
 
-    drawFrame();
-    
+    //drawFrame();
+
+    function update_slope(){
+      ctx.clearRect(0,0, canvas.width, canvas.height);
+      plane.draw(ctx);
+      find_solution();
+      for (let x=-10; x< 10; x+=0.6){
+        for(let y=-10; y<10; y+=0.6){
+          var slope = diff_equations[parameters.equations](x,y)
+          slope_line.y = plane.centerY - y*plane.ppi;
+          slope_line.x = plane.centerX + x*plane.ppi;
+          slope_line.draw(ctx, slope);
+        }
+      }
+    }
+    update_slope();
     
 
   };
